@@ -1,0 +1,30 @@
+name: QuickBooks Payments Flow - Project Automation
+
+on:
+  pull_request:
+    types: [opened, reopened, closed]
+
+jobs:
+  update-project:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Move PR to In Progress
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('PR #' + context.issue.number + ' opened - moving to In Progress');
+            // This is a placeholder - manual setup of the project is required
+            // See the repository wiki for manual project setup instructions
+
+      - name: Move PR to Done
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('PR #' + context.issue.number + ' merged - moving to Done');
+            // This is a placeholder - manual setup of the project is required
+            // See the repository wiki for manual project setup instructions
