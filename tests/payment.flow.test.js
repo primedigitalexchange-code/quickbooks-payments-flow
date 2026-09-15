@@ -58,6 +58,23 @@ describe('Payment Flow Integration', () => {
       expect(response.body.data.bankAddress).toBe('270 Park Ave, New York, NY');
     });
 
+    it('should normalize formatted account and routing numbers', async () => {
+      const response = await request(app)
+        .post('/api/payments/bank-details/complete')
+        .send({
+          accountNumber: '1234-5678-9012',
+          routingNumber: '0210-00021',
+          bankName: 'Chase Bank',
+          bankAddress: '270 Park Ave, New York, NY'
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.accountNumber).toBe('123456789012');
+      expect(response.body.data.maskedAccountNumber).toBe('****9012');
+      expect(response.body.data.routingNumber).toBe('021000021');
+    });
+
     it('should validate required bank details fields', async () => {
       const response = await request(app)
         .post('/api/payments/bank-details/complete')
