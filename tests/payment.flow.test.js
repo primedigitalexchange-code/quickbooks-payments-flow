@@ -38,6 +38,42 @@ describe('Payment Flow Integration', () => {
     });
   });
 
+  describe('POST /api/payments/bank-details/complete', () => {
+    it('should build a complete bank details payload', async () => {
+      const response = await request(app)
+        .post('/api/payments/bank-details/complete')
+        .send({
+          accountNumber: '123456789012',
+          routingNumber: '021000021',
+          bankName: '  Chase Bank  ',
+          bankAddress: '  270 Park Ave, New York, NY  '
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.accountNumber).toBe('123456789012');
+      expect(response.body.data.maskedAccountNumber).toBe('****9012');
+      expect(response.body.data.routingNumber).toBe('021000021');
+      expect(response.body.data.bankName).toBe('Chase Bank');
+      expect(response.body.data.bankAddress).toBe('270 Park Ave, New York, NY');
+    });
+
+    it('should validate required bank details fields', async () => {
+      const response = await request(app)
+        .post('/api/payments/bank-details/complete')
+        .send({
+          accountNumber: '123',
+          routingNumber: '123',
+          bankName: '',
+          bankAddress: ''
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+  });
+
   describe('GET /api/payments/:paymentId/status', () => {
     it('should retrieve payment status', async () => {
       // First create a payment
