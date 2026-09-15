@@ -31,7 +31,23 @@ const validatePayment = (req, res, next) => {
 };
 
 const validateBankDetails = (req, res, next) => {
-  const { error, value } = bankDetailsSchema.validate(req.body);
+  const normalizedBankDetails = {
+    ...req.body,
+    accountNumber: typeof req.body.accountNumber === 'string'
+      ? req.body.accountNumber.replace(/\D/g, '')
+      : req.body.accountNumber,
+    routingNumber: typeof req.body.routingNumber === 'string'
+      ? req.body.routingNumber.replace(/\D/g, '')
+      : req.body.routingNumber,
+    bankName: typeof req.body.bankName === 'string'
+      ? req.body.bankName.trim()
+      : req.body.bankName,
+    bankAddress: typeof req.body.bankAddress === 'string'
+      ? req.body.bankAddress.trim()
+      : req.body.bankAddress
+  };
+
+  const { error, value } = bankDetailsSchema.validate(normalizedBankDetails);
 
   if (error) {
     logger.warn('Bank details validation failed', error.message);
