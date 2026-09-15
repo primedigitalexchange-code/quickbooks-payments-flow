@@ -60,7 +60,45 @@ Start a new payment transaction.
 
 ---
 
-### 2. Process Payment
+### 2. Build Complete Bank Details
+
+Validate and normalize bank account details payload.
+
+**Endpoint:** `POST /payments/bank-details/complete`
+
+**Request Body:**
+```json
+{
+  "accountNumber": "123456789012",
+  "routingNumber": "021000021",
+  "bankName": "Chase Bank",
+  "bankAddress": "270 Park Ave, New York, NY"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "accountNumber": "123456789012",
+    "maskedAccountNumber": "****9012",
+    "routingNumber": "021000021",
+    "bankName": "Chase Bank",
+    "bankAddress": "270 Park Ave, New York, NY"
+  }
+}
+```
+
+**Validation Rules:**
+- `accountNumber`: Required, 4 to 17 digits
+- `routingNumber`: Required, exactly 9 digits
+- `bankName`: Required, non-empty string
+- `bankAddress`: Required, non-empty string
+
+---
+
+### 3. Process Payment
 
 Process an initiated payment with QuickBooks.
 
@@ -109,7 +147,7 @@ Process an initiated payment with QuickBooks.
 
 ---
 
-### 3. Get Payment Status
+### 4. Get Payment Status
 
 Retrieve the current status of a payment.
 
@@ -149,7 +187,7 @@ Retrieve the current status of a payment.
 
 ---
 
-### 4. Refund Payment
+### 5. Refund Payment
 
 Refund a completed payment (full or partial).
 

@@ -133,6 +133,19 @@ Response:
 }
 ```
 
+#### Build Complete Bank Details
+```bash
+POST /api/payments/bank-details/complete
+Content-Type: application/json
+
+{
+  "accountNumber": "123456789012",
+  "routingNumber": "021000021",
+  "bankName": "Chase Bank",
+  "bankAddress": "270 Park Ave, New York, NY"
+}
+```
+
 #### Get Payment Status
 ```bash
 GET /api/payments/:paymentId/status

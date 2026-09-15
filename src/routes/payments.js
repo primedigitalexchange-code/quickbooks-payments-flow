@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../utils/logger');
 const paymentService = require('../services/payment.service');
-const { validatePayment } = require('../middleware/validation');
+const { validatePayment, validateBankDetails } = require('../middleware/validation');
 
 // Initiate a payment
 router.post('/initiate', validatePayment, async (req, res, next) => {
@@ -36,6 +36,20 @@ router.post('/:paymentId/process', async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Build complete bank details payload
+router.post('/bank-details/complete', validateBankDetails, (req, res, next) => {
+  try {
+    const completeBankDetails = paymentService.buildCompleteBankDetails(req.body);
+
+    res.status(200).json({
+      success: true,
+      data: completeBankDetails
     });
   } catch (error) {
     next(error);

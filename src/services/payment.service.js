@@ -11,6 +11,22 @@ class PaymentService {
     this.paymentStore = new PaymentStore();
   }
 
+  buildCompleteBankDetails(bankDetails) {
+    const accountNumber = bankDetails.accountNumber.replace(/\D/g, '');
+    const routingNumber = bankDetails.routingNumber.replace(/\D/g, '');
+    const maskedAccountNumber = accountNumber.length > 4
+      ? `****${accountNumber.slice(-4)}`
+      : accountNumber;
+
+    return {
+      accountNumber,
+      maskedAccountNumber,
+      routingNumber,
+      bankName: bankDetails.bankName.trim(),
+      bankAddress: bankDetails.bankAddress.trim()
+    };
+  }
+
   async initiatePayment(paymentData) {
     const paymentId = uuidv4();
     
