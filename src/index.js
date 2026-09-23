@@ -1,6 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
@@ -29,6 +30,12 @@ app.use('/api/webhooks', webhookRoutes);
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Serve the UI
+app.use(express.static(path.join(__dirname, '..', 'public')));
+app.get(['/', '/login', '/bank-details'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // Error handling middleware
