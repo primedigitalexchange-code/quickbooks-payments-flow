@@ -275,6 +275,97 @@ Response:
 
 ---
 
+## 🧭 Live Payments Smoke-Check Runbook (Production)
+
+Use this runbook after every production deploy and before declaring payments healthy.
+
+### Prerequisites
+- Deployment completed successfully
+- Production env vars set on the deployed service:
+  - `QUICKBOOKS_CLIENT_ID`
+  - `QUICKBOOKS_CLIENT_SECRET`
+  - `QUICKBOOKS_REALM_ID`
+  - `QUICKBOOKS_ENVIRONMENT=production`
+  - `LOG_LEVEL=info` (or `debug`)
+- Access to application logs (`combined.log` and `error.log`)
+- Dedicated low-risk smoke-check customer and test amount
+
+### Success Criteria (must all pass)
+1. Token refresh succeeds through `/api/auth/refresh`
+2. Payment initiation succeeds through `/api/payments/initiate`
+3. Payment processing reaches QuickBooks through `/api/payments/:paymentId/process`
+4. Status lookup returns QuickBooks-backed data through `/api/payments/:paymentId/status`
+5. Logs show end-to-end traceability with `x-request-id` and QuickBooks status metadata (`qbHttpStatus`)
+
+### Step A — Token refresh gate (run first)
+```bash
+curl -X POST https://your-domain.com/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -H "x-request-id: smoke-auth-$(date +%s)" \
+  -d '{
+    "refreshToken": "your_production_refresh_token"
+  }'
+```
+
+Pass if response is `200` with `"success": true`.
+Fail if any `401/500` or token refresh error appears; stop here and escalate.
+
+### Step B — Controlled payment smoke flow
+1. Initiate payment:
+```bash
+curl -X POST https://your-domain.com/api/payments/initiate \
+  -H "Content-Type: application/json" \
+  -H "x-request-id: smoke-init-$(date +%s)" \
+  -d '{
+    "amount": 1.00,
+    "currency": "USD",
+    "customerId": "smoke_customer_live",
+    "description": "production smoke check"
+  }'
+```
+2. Capture returned `paymentId`.
+3. Process payment:
+```bash
+curl -X POST https://your-domain.com/api/payments/<paymentId>/process \
+  -H "Content-Type: application/json" \
+  -H "x-request-id: smoke-process-$(date +%s)" \
+  -d '{
+    "amount": 1.00,
+    "currency": "USD",
+    "customerId": "smoke_customer_live"
+  }'
+```
+4. Query status:
+```bash
+curl https://your-domain.com/api/payments/<paymentId>/status \
+  -H "x-request-id: smoke-status-$(date +%s)"
+```
+
+Pass if all requests return success and status data includes QuickBooks-backed identifiers/status.
+
+### Step C — Observability validation
+In `combined.log` and `error.log`, confirm:
+- Each smoke request has a `requestId` matching/derived from `x-request-id`
+- QuickBooks calls log `qbHttpStatus`
+- Any failures include request context + error message sufficient for triage
+
+### Rollback/Refund Criteria
+- If payment processing succeeded for the smoke transaction, execute refund via `/api/payments/:paymentId/refund`
+- If any smoke step fails after deploy, mark release as unhealthy and initiate rollback according to your deployment policy
+
+### Incident Escalation
+- Capture failing request/response payloads (without secrets), request IDs, and relevant log excerpts
+- Notify on-call/backend owner immediately
+- Escalate to QuickBooks integration owner when `qbHttpStatus` indicates persistent upstream failures
+- Do not resume normal payment traffic until smoke-check passes
+
+### Release Gate Policy
+- Smoke-check is a mandatory release gate after production deploys
+- Production payment path is considered healthy only when all smoke criteria pass
+- Record run timestamp, operator, request IDs, and pass/fail result in your release notes
+
+---
+
 ## 📚 API Endpoints Summary
 
 | Method | Endpoint | Purpose |
