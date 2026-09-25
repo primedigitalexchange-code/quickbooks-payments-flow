@@ -327,6 +327,8 @@ All operations are logged using Winston:
 - **Warn**: Retry attempts and recoverable errors
 - **Error**: Failed operations and exceptions
 - **Debug**: Detailed operational data
+- **Request Correlation**: Each request is tagged with `x-request-id` for tracing
+- **QuickBooks API Metadata**: Payment/refund/status logs include QuickBooks HTTP status fields
 
 Logs are written to:
 - `combined.log` - All logs

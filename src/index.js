@@ -50,6 +50,7 @@ app.get(['/', '/login', '/bank-details'], (req, res) => {
 app.use((err, req, res, next) => {
   logger.error(`Error: ${err.message}`, { requestId: req.id, stack: err.stack });
   res.status(err.statusCode || 500).json({
+    success: false,
     error: err.message || 'Internal Server Error',
     requestId: req.id
   });
