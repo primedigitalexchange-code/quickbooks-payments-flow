@@ -14,7 +14,7 @@ router.post('/initiate', validatePayment, async (req, res, next) => {
       currency,
       customerId,
       description
-    });
+    }, req.id);
 
     res.status(201).json({
       success: true,
@@ -31,7 +31,7 @@ router.post('/:paymentId/process', async (req, res, next) => {
     const { paymentId } = req.params;
     const paymentData = req.body;
 
-    const result = await paymentService.processPaymentWithRetry(paymentId, paymentData);
+    const result = await paymentService.processPaymentWithRetry(paymentId, paymentData, req.id);
 
     res.status(200).json({
       success: true,
@@ -60,7 +60,7 @@ router.post('/bank-details/complete', validateBankDetails, (req, res, next) => {
 router.get('/:paymentId/status', async (req, res, next) => {
   try {
     const { paymentId } = req.params;
-    const payment = await paymentService.getPaymentStatus(paymentId);
+    const payment = await paymentService.getPaymentStatus(paymentId, req.id);
 
     res.status(200).json({
       success: true,
@@ -77,7 +77,7 @@ router.post('/:paymentId/refund', async (req, res, next) => {
     const { paymentId } = req.params;
     const { amount } = req.body;
 
-    const result = await paymentService.refundPayment(paymentId, amount);
+    const result = await paymentService.refundPayment(paymentId, amount, req.id);
 
     res.status(200).json({
       success: true,

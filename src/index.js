@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
@@ -16,9 +17,16 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Request ID middleware
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || uuidv4();
+  res.setHeader('x-request-id', req.id);
+  next();
+});
+
 // Request logging middleware
 app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`);
+  logger.info(`${req.method} ${req.path}`, { requestId: req.id });
   next();
 });
 
@@ -40,8 +48,9 @@ app.get(['/', '/login', '/bank-details'], (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  logger.error(`Error: ${err.message}`, err);
+  logger.error(`Error: ${err.message}`, { requestId: req.id, stack: err.stack });
   res.status(err.statusCode || 500).json({
+    success: false,
     error: err.message || 'Internal Server Error',
     requestId: req.id
   });

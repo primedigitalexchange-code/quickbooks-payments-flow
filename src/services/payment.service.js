@@ -27,11 +27,11 @@ class PaymentService {
     };
   }
 
-  async initiatePayment(paymentData) {
+  async initiatePayment(paymentData, requestId) {
     const paymentId = uuidv4();
     
     try {
-      logger.info('Initiating payment', { paymentId, amount: paymentData.amount });
+      logger.info('Initiating payment', { requestId, paymentId, amount: paymentData.amount });
       
       const payment = {
         id: paymentId,
@@ -44,19 +44,19 @@ class PaymentService {
       this.paymentStore.save(payment);
       return payment;
     } catch (error) {
-      logger.error('Failed to initiate payment', error);
+      logger.error('Failed to initiate payment', { requestId, paymentId, error: error.message });
       throw error;
     }
   }
 
-  async processPaymentWithRetry(paymentId, paymentData) {
+  async processPaymentWithRetry(paymentId, paymentData, requestId) {
     let lastError;
     
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        logger.info(`Processing payment (attempt ${attempt}/${MAX_RETRIES})`, { paymentId });
+        logger.info(`Processing payment (attempt ${attempt}/${MAX_RETRIES})`, { requestId, paymentId });
         
-        const result = await qbService.createPayment(paymentData);
+        const result = await qbService.createPayment(paymentData, requestId);
         
         const payment = this.paymentStore.get(paymentId);
         payment.status = 'completed';
@@ -67,7 +67,11 @@ class PaymentService {
         return result;
       } catch (error) {
         lastError = error;
-        logger.warn(`Payment processing failed (attempt ${attempt}/${MAX_RETRIES})`, error.message);
+        logger.warn(`Payment processing failed (attempt ${attempt}/${MAX_RETRIES})`, {
+          requestId,
+          paymentId,
+          error: error.message
+        });
         
         if (attempt < MAX_RETRIES) {
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
@@ -81,11 +85,15 @@ class PaymentService {
     payment.updatedAt = new Date();
     this.paymentStore.save(payment);
 
-    logger.error('Payment processing failed after retries', lastError);
+    logger.error('Payment processing failed after retries', {
+      requestId,
+      paymentId,
+      error: lastError.message
+    });
     throw lastError;
   }
 
-  async getPaymentStatus(paymentId) {
+  async getPaymentStatus(paymentId, requestId) {
     try {
       const payment = this.paymentStore.get(paymentId);
       
@@ -94,20 +102,20 @@ class PaymentService {
       }
 
       if (payment.qbPaymentId) {
-        const qbStatus = await qbService.getPaymentStatus(payment.qbPaymentId);
+        const qbStatus = await qbService.getPaymentStatus(payment.qbPaymentId, requestId);
         payment.qbStatus = qbStatus;
       }
 
       return payment;
     } catch (error) {
-      logger.error('Failed to get payment status', error);
+      logger.error('Failed to get payment status', { requestId, paymentId, error: error.message });
       throw error;
     }
   }
 
-  async refundPayment(paymentId, amount) {
+  async refundPayment(paymentId, amount, requestId) {
     try {
-      logger.info('Initiating refund', { paymentId, amount });
+      logger.info('Initiating refund', { requestId, paymentId, amount });
       
       const payment = this.paymentStore.get(paymentId);
       
@@ -117,7 +125,7 @@ class PaymentService {
 
       const refundResult = await qbService.refundPayment(payment.qbPaymentId, {
         amount: amount || payment.amount
-      });
+      }, requestId);
 
       payment.refundId = refundResult.id;
       payment.refundAmount = amount || payment.amount;
@@ -127,7 +135,7 @@ class PaymentService {
 
       return refundResult;
     } catch (error) {
-      logger.error('Failed to refund payment', error);
+      logger.error('Failed to refund payment', { requestId, paymentId, error: error.message });
       throw error;
     }
   }

@@ -3,9 +3,17 @@ const logger = require('../utils/logger');
 const qbConfig = require('../config/quickbooks');
 
 class QuickBooksService {
-  async refreshAccessToken(refreshToken) {
+  logAxiosError(message, error, context = {}) {
+    logger.error(message, {
+      ...context,
+      error: error.message,
+      qbHttpStatus: error.response?.status
+    });
+  }
+
+  async refreshAccessToken(refreshToken, requestId) {
     try {
-      logger.info('Refreshing QuickBooks access token');
+      logger.info('Refreshing QuickBooks access token', { requestId });
       
       const response = await axios.post('https://oauth.platform.intuit.com/oauth2/tokens/bearer', 
         `grant_type=refresh_token&refresh_token=${refreshToken}`,
@@ -17,10 +25,14 @@ class QuickBooksService {
         }
       );
 
+      logger.info('QuickBooks token refresh succeeded', {
+        requestId,
+        qbHttpStatus: response.status
+      });
       qbConfig.setAccessToken(response.data.access_token, response.data.expires_in);
       return response.data;
     } catch (error) {
-      logger.error('Failed to refresh access token:', error.message);
+      this.logAxiosError('Failed to refresh access token', error, { requestId });
       throw new Error('Token refresh failed');
     }
   }
@@ -41,9 +53,9 @@ class QuickBooksService {
     }
   }
 
-  async createPayment(paymentData) {
+  async createPayment(paymentData, requestId) {
     try {
-      logger.info('Creating payment in QuickBooks', { customerId: paymentData.customerId });
+      logger.info('Creating payment in QuickBooks', { requestId, customerId: paymentData.customerId });
       
       const url = `${qbConfig.getBaseUrl()}/v2/payments`;
       const response = await axios.post(url, paymentData, {
@@ -51,43 +63,60 @@ class QuickBooksService {
         timeout: parseInt(process.env.PAYMENT_TIMEOUT_MS || 30000)
       });
 
-      logger.info('Payment created successfully', { paymentId: response.data.id });
+      logger.info('Payment created successfully', {
+        requestId,
+        paymentId: response.data.id,
+        qbHttpStatus: response.status
+      });
       return response.data;
     } catch (error) {
-      logger.error('Failed to create payment:', error.message);
+      this.logAxiosError('Failed to create payment', error, {
+        requestId,
+        customerId: paymentData.customerId
+      });
       throw error;
     }
   }
 
-  async getPaymentStatus(paymentId) {
+  async getPaymentStatus(paymentId, requestId) {
     try {
-      logger.info('Fetching payment status', { paymentId });
+      logger.info('Fetching payment status', { requestId, paymentId });
       
       const url = `${qbConfig.getBaseUrl()}/v2/payments/${paymentId}`;
       const response = await axios.get(url, {
         headers: qbConfig.getHeaders()
       });
 
+      logger.info('Fetched payment status from QuickBooks', {
+        requestId,
+        paymentId,
+        qbHttpStatus: response.status
+      });
       return response.data;
     } catch (error) {
-      logger.error('Failed to fetch payment status:', error.message);
+      this.logAxiosError('Failed to fetch payment status', error, { requestId, paymentId });
       throw error;
     }
   }
 
-  async refundPayment(paymentId, refundData) {
+  async refundPayment(paymentId, refundData, requestId) {
     try {
-      logger.info('Processing refund', { paymentId });
+      logger.info('Processing refund', { requestId, paymentId });
       
       const url = `${qbConfig.getBaseUrl()}/v2/payments/${paymentId}/refunds`;
       const response = await axios.post(url, refundData, {
         headers: qbConfig.getHeaders()
       });
 
-      logger.info('Refund processed successfully', { refundId: response.data.id });
+      logger.info('Refund processed successfully', {
+        requestId,
+        paymentId,
+        refundId: response.data.id,
+        qbHttpStatus: response.status
+      });
       return response.data;
     } catch (error) {
-      logger.error('Failed to process refund:', error.message);
+      this.logAxiosError('Failed to process refund', error, { requestId, paymentId });
       throw error;
     }
   }
