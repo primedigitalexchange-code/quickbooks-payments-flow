@@ -381,6 +381,18 @@ Optional flags:
 - `REFUND_ON_SUCCESS=0` to skip refund
 - `DRY_RUN=1` to print calls without executing them
 
+### GitHub Actions manual run
+This repository includes a manual workflow at:
+`/.github/workflows/production-smoke-check.yml`
+
+Before running it, configure repository secret:
+- `QUICKBOOKS_PROD_REFRESH_TOKEN`
+
+Then run **Actions → Production Smoke Check → Run workflow** and provide:
+- `base_url` (production endpoint base URL)
+- `smoke_customer_id` (dedicated low-risk customer)
+- optional: `amount`, `currency`, `request_id_prefix`, `refund_on_success`
+
 ---
 
 ## 📚 API Endpoints Summary

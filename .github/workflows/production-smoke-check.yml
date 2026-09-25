@@ -1,0 +1,62 @@
+name: Production Smoke Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Production base URL (for example, https://api.example.com)'
+        required: true
+        type: string
+      smoke_customer_id:
+        description: 'Dedicated low-risk smoke-check customer ID'
+        required: true
+        type: string
+      amount:
+        description: 'Smoke amount'
+        required: false
+        default: '1.00'
+        type: string
+      currency:
+        description: 'Currency code'
+        required: false
+        default: 'USD'
+        type: string
+      request_id_prefix:
+        description: 'Request ID prefix'
+        required: false
+        default: 'gha-smoke'
+        type: string
+      refund_on_success:
+        description: 'Run refund after successful smoke check'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  smoke-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run production smoke-check
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          REFRESH_TOKEN: ${{ secrets.QUICKBOOKS_PROD_REFRESH_TOKEN }}
+          SMOKE_CUSTOMER_ID: ${{ inputs.smoke_customer_id }}
+          AMOUNT: ${{ inputs.amount }}
+          CURRENCY: ${{ inputs.currency }}
+          REQUEST_ID_PREFIX: ${{ inputs.request_id_prefix }}
+          REFUND_ON_SUCCESS: ${{ inputs.refund_on_success && '1' || '0' }}
+        run: npm run smoke:prod
