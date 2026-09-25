@@ -364,6 +364,23 @@ In `combined.log` and `error.log`, confirm:
 - Production payment path is considered healthy only when all smoke criteria pass
 - Record run timestamp, operator, request IDs, and pass/fail result in your release notes
 
+### One-command smoke-check runner
+You can run the full flow from a single command:
+
+```bash
+BASE_URL=https://your-domain.com \
+REFRESH_TOKEN=your_production_refresh_token \
+SMOKE_CUSTOMER_ID=smoke_customer_live \
+npm run smoke:prod
+```
+
+Optional flags:
+- `AMOUNT` (default `1.00`)
+- `CURRENCY` (default `USD`)
+- `REQUEST_ID_PREFIX` (default `smoke`)
+- `REFUND_ON_SUCCESS=0` to skip refund
+- `DRY_RUN=1` to print calls without executing them
+
 ---
 
 ## 📚 API Endpoints Summary
